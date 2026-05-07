@@ -1,34 +1,40 @@
-Feature: Calculator operations
-  As a user
-  I want to perform arithmetic operations
-  So that I can get correct results
+import pytest
+from pytest_bdd import scenarios, given, when, then, parsers
+from calculator import add, subtract, multiply, divide
 
-  Scenario: Add two numbers
-    Given I have the numbers 2 and 3
-    When I add them
-    Then the result should be 5
+scenarios("calculator.feature")
 
-  Scenario: Subtract two numbers
-    Given I have the numbers 10 and 4
-    When I subtract them
-    Then the result should be 6
+# ── Given steps ──
+@given(parsers.parse('I have the numbers {a:d} and {b:d}'), target_fixture="context")
+def set_numbers(a, b):
+    return {"a": a, "b": b, "error": None, "result": None}
 
-  Scenario: Multiply two numbers
-    Given I have the numbers 3 and 4
-    When I multiply them
-    Then the result should be 12
+# ── When steps ──
+@when('I add them')
+def when_add(context):
+    context["result"] = add(context["a"], context["b"])
 
-  Scenario Outline: Divide two numbers
-    Given I have the numbers <a> and <b>
-    When I divide them
-    Then the result should be <result>
+@when('I subtract them')
+def when_subtract(context):
+    context["result"] = subtract(context["a"], context["b"])
 
-    Examples:
-      | a  | b | result |
-      | 10 | 2 | 5.0    |
-      | 7  | 2 | 3.5    |
+@when('I multiply them')
+def when_multiply(context):
+    context["result"] = multiply(context["a"], context["b"])
 
-  Scenario: Divide by zero raises an error
-    Given I have the numbers 5 and 0
-    When I divide them
-    Then a ValueError should be raised
+@when('I divide them')
+def when_divide(context):
+    try:
+        context["result"] = divide(context["a"], context["b"])
+    except ValueError as e:
+        context["error"] = e
+
+# ── Then steps ──
+@then(parsers.parse('the result should be {expected:g}'))
+def check_result(context, expected):
+    assert context["result"] == pytest.approx(expected)
+
+@then('a ValueError should be raised')
+def check_error(context):
+    assert isinstance(context["error"], ValueError)
+    assert "Cannot divide by zero" in str(context["error"])
