@@ -5,6 +5,7 @@ from calculator import add, subtract, multiply, divide
 scenarios("calculator.feature")
 
 # Given steps
+# parser was not added as the divide functionality was changing the data type
 @given(parsers.parse('I have the numbers {a:d} and {b:d}'), target_fixture="context")
 def set_numbers(a, b):
     return {"a": a, "b": b, "error": None, "result": None}
